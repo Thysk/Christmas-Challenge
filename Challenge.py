@@ -1,5 +1,10 @@
+import timeit
 from random import randrange
 from collections import Counter
+from multiprocessing import Pool, cpu_count
+from concurrent.futures import ProcessPoolExecutor as PPE
+from concurrent.futures import as_completed
+
 
 class ChristmasHamper:
 
@@ -44,11 +49,12 @@ class ChristmasHamper:
 
 
 class Hands:
-    def __init__(self, hamper: object):
-        self.hamper = hamper
+    def __init__(self, varieties, count):
+        self.hamper = ChristmasHamper(varieties=varieties,count=count)
         self.picking_hand = []
         self.holding_hand = []
         self.last_consumed = ""
+
 
     def __str__(self) -> str:
         return f"In the Hand:   {str(self.holding_hand)}\n"
@@ -114,7 +120,7 @@ class Hands:
         if they do not match the previously consumed item, consume, 
         if they do, continue taking items
         """
-        self.status_report()
+
         while  self.max_count_of_items(self.hamper.contents()) > 1:
             self.pick_up_random_item()
             if self.check_for_duplicates():
@@ -131,18 +137,28 @@ class Hands:
             self.pick_up_random_item()
             self.try_to_consume()
 
-
+def christmas_hamper_simulator(varieties: int, count: int) -> list:
+    hand = Hands(varieties=varieties, count=count)
+    return hand.hamper_binge()
 
 
 
 if __name__ == "__main__":
+    repeats = 300000
+    varieties = 10
+    count = 2
     results = []
-    for _ in range(1):
-        test_hamper = ChristmasHamper(
-            varieties=126,
-            count=1
-            )
-        test_hand = Hands(test_hamper)
-        results.append((test_hand.hamper_binge()))
-    print(min(results))
-    print(max(results))
+
+    start = timeit.default_timer()
+
+    with PPE() as executor:
+        job_results = [executor.submit(christmas_hamper_simulator, varieties=varieties, count=count) for _ in range(repeats)]
+        
+
+        for result in as_completed(job_results):
+            results.append(result.result())
+
+    end = timeit.default_timer()
+    minimum = (min(results))
+    maximum = (max(results))
+    print(f"Took {end-start} seconds for {repeats} repeats to find the min ({minimum}) and max ({maximum}) of {varieties} varieties and {count} of each")
