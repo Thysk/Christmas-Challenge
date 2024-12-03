@@ -152,7 +152,7 @@ if __name__ == "__main__":
     start = timeit.default_timer()
 
     for _ in range(repeats):
-        christmas_hamper_simulator(varieties=varieties, count=count)
+        results.append(christmas_hamper_simulator(varieties=varieties, count=count))
 
     end = timeit.default_timer()
     minimum = (min(results))
